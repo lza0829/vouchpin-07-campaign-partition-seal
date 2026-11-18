@@ -32,6 +32,9 @@ onMounted(load)
 </script>
 <template>
   <div class="panel">
+    <p class="msg policy">
+      写闸与钉扎同粒度：按活动分批钉扎后，仅已钉活动禁止再写核销；未钉活动仍可写入。不存在整日一把封存。
+    </p>
     <div class="row">
       <label>类型
         <select v-model="form.event_type">

@@ -7,6 +7,7 @@ from app.repositories import settings as settings_repo
 from app.repositories import events as event_repo
 from app.repositories import facts as fact_repo
 from app.repositories import campaigns as camp_repo
+from app.repositories import batches as batch_repo
 
 
 def list_campaigns() -> list[dict[str, Any]]:
@@ -37,8 +38,14 @@ def add_event(body: dict[str, Any]) -> dict[str, Any]:
         camp = (body.get("campaign_code") or "").strip()
         if not code or not camp:
             raise HTTPException(400, "coupon_code / campaign_code 必填")
-        if et == "redeem" and fact_repo.day_is_sealed(conn, day):
-            raise HTTPException(409, f"业务日 {day} 核销已钉扎，禁止再写入核销")
+        if et == "redeem":
+            # 写闸孔径与钉扎粒度一致：整日钉扎封整日；按活动钉扎只封已钉活动。
+            if batch_repo.day_scope_batches(conn, day):
+                raise HTTPException(409, f"业务日 {day} 已整日钉扎，禁止再写入核销")
+            if batch_repo.get_campaign_batch(conn, day, camp):
+                raise HTTPException(
+                    409, f"活动 {camp} 在业务日 {day} 已钉扎，禁止再写入该活动核销"
+                )
         amount = float(body.get("amount") or 0)
         if et == "redeem" and amount <= 0:
             # default face value from campaign

@@ -2,7 +2,7 @@ from __future__ import annotations
 import sqlite3
 from app.config import DB_PATH
 
-SCHEMA = '''
+TABLES = '''
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -38,12 +38,25 @@ CREATE TABLE IF NOT EXISTS redeem_facts (
 CREATE TABLE IF NOT EXISTS redeem_batches (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   business_day TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'day',
+  campaign_code TEXT,
   status TEXT NOT NULL,
   fact_count INTEGER NOT NULL DEFAULT 0,
   total_amount REAL NOT NULL DEFAULT 0,
   sealed_at TEXT,
   note TEXT NOT NULL DEFAULT ''
 );
+'''
+
+INDEXES = '''
+CREATE INDEX IF NOT EXISTS idx_facts_day_campaign_status
+  ON redeem_facts(business_day, campaign_code, status);
+CREATE INDEX IF NOT EXISTS idx_batches_day_scope_campaign
+  ON redeem_batches(business_day, scope, campaign_code);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_campaign_batch_per_day
+  ON redeem_batches(business_day, campaign_code) WHERE scope='campaign';
+CREATE UNIQUE INDEX IF NOT EXISTS uq_day_batch_per_day
+  ON redeem_batches(business_day) WHERE scope='day';
 '''
 
 
@@ -55,10 +68,21 @@ def connect(immediate: bool = False) -> sqlite3.Connection:
     return conn
 
 
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Upgrade snapshots created before seal granularity existed."""
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(redeem_batches)").fetchall()}
+    if "scope" not in cols:
+        conn.execute("ALTER TABLE redeem_batches ADD COLUMN scope TEXT NOT NULL DEFAULT 'day'")
+    if "campaign_code" not in cols:
+        conn.execute("ALTER TABLE redeem_batches ADD COLUMN campaign_code TEXT")
+
+
 def init_db() -> None:
     conn = connect()
     try:
-        conn.executescript(SCHEMA)
+        conn.executescript(TABLES)
+        _migrate(conn)
+        conn.executescript(INDEXES)
         conn.commit()
     finally:
         conn.close()

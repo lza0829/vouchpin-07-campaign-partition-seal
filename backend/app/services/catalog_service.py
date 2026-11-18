@@ -5,6 +5,7 @@ from app.repositories import settings as settings_repo
 from app.repositories import facts as fact_repo
 from app.repositories import batches as batch_repo
 from app.repositories import events as event_repo
+from app.services import redeem_service
 
 
 def dashboard() -> dict[str, Any]:
@@ -17,16 +18,23 @@ def dashboard() -> dict[str, Any]:
         total = round(sum(float(f["amount"]) for f in facts), 2)
         events = event_repo.list_events(conn, day)
         batches = batch_repo.list_batches(conn)
-        sealed_today = fact_repo.day_is_sealed(conn, day)
+        campaign_batches = batch_repo.list_campaign_batches(conn, day)
+        day_sealed = bool(batch_repo.day_scope_batches(conn, day))
+        _, ledger = redeem_service.campaign_ledger(conn, day)
         return {
             "business_day": day,
+            "seal_scope": redeem_service.SEAL_SCOPE,
             "event_count": len(events),
             "fact_count": len(facts),
             "open_fact_count": open_n,
             "sealed_fact_count": sealed_n,
             "redeem_total_today": total,
             "batch_count": len(batches),
-            "day_sealed": sealed_today,
+            "campaign_batch_count": len(campaign_batches),
+            "sealed_campaign_count": len(campaign_batches),
+            "day_sealed": day_sealed,
+            "day_scope_batch_count": len(batch_repo.day_scope_batches(conn, day)),
+            "ledger": ledger,
         }
     finally:
         conn.close()

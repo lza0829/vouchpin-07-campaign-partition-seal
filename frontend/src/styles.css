@@ -118,6 +118,21 @@ button.ghost {
 }
 .msg { margin-top: 0.7rem; color: var(--muted); }
 .msg.err { color: var(--bad); }
+.msg.policy {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.7rem;
+  border-left: 3px solid var(--ticket);
+  background: linear-gradient(90deg, rgba(196, 59, 122, 0.07), transparent 70%);
+  color: var(--ink-soft);
+}
+.grid.ledger { margin-top: 0.75rem; }
+.stat .v.scope { font-size: 1.05rem; }
+.row.head { align-items: center; justify-content: space-between; margin: 0 0 0.4rem; }
+tr.picked td { background: rgba(196, 59, 122, 0.05); }
+td.ops { white-space: nowrap; }
+td.ops button + button { margin-left: 0.35rem; }
+td small, .muted { color: var(--muted); font-size: 0.78rem; }
+td.ops small { display: block; margin-top: 0.25rem; white-space: normal; }
 .tag {
   display: inline-block; padding: 0.12rem 0.45rem; border-radius: 999px;
   font-size: 0.75rem; background: rgba(36, 56, 100, 0.08); color: var(--navy);

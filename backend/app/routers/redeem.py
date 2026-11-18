@@ -12,8 +12,11 @@ def facts(business_day: str | None = Query(None)):
 
 
 @router.get("/redeem/preview")
-def preview(business_day: str | None = Query(None)):
-    return svc.preview(business_day)
+def preview(
+    business_day: str | None = Query(None),
+    campaign_code: str | None = Query(None),
+):
+    return svc.preview(business_day, campaign_code)
 
 
 @router.post("/redeem/seal")

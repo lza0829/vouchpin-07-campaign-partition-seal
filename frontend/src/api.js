@@ -19,7 +19,12 @@ export const api = {
   events: (day) => req('/events' + (day ? `?business_day=${encodeURIComponent(day)}` : '')),
   addEvent: (body) => req('/events', { method: 'POST', body: JSON.stringify(body) }),
   facts: (day) => req('/facts' + (day ? `?business_day=${encodeURIComponent(day)}` : '')),
-  preview: (day) => req('/redeem/preview' + (day ? `?business_day=${encodeURIComponent(day)}` : '')),
+  preview: (day, campaign) => {
+    const q = []
+    if (day) q.push(`business_day=${encodeURIComponent(day)}`)
+    if (campaign) q.push(`campaign_code=${encodeURIComponent(campaign)}`)
+    return req('/redeem/preview' + (q.length ? `?${q.join('&')}` : ''))
+  },
   seal: (body) => req('/redeem/seal', { method: 'POST', body: JSON.stringify(body) }),
   batches: () => req('/batches'),
   getDay: () => req('/settings/day'),
